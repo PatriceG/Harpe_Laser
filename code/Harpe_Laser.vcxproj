@@ -48,8 +48,8 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>$(ProjectDir)..\libraries\Adafruit_MCP4725;e:\Arduino\arduino-1.8.4\hardware\teensy\avr\libraries\MIDI\src;e:\Arduino\arduino-1.8.4\hardware\teensy\avr\libraries\Wire;e:\Arduino\arduino-1.8.4\hardware\teensy\avr\libraries\Wire\utility;e:\Arduino\arduino-1.8.4\libraries;e:\Arduino\arduino-1.8.4\hardware\teensy\avr\libraries;$(ProjectDir)..\libraries;e:\Arduino\arduino-1.8.4\hardware\teensy\avr\cores\teensy;e:\Arduino\arduino-1.8.4\hardware\teensy\avr\cores\teensy\utils;e:\Arduino\arduino-1.8.4\hardware\teensy\avr\cores\teensy\avr;$(ProjectDir)..\Harpe_Laser;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <ForcedIncludeFiles>$(ProjectDir)__vm\.Harpe_Laser.vsarduino.h;%(ForcedIncludeFiles)</ForcedIncludeFiles>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\..\..\..\..\Documents\Arduino\libraries\Adafruit_MCP4725;e:\Arduino\arduino-1.8.4\hardware\teensy\avr\libraries\Wire;e:\Arduino\arduino-1.8.4\hardware\teensy\avr\libraries\MIDI\src;e:\Arduino\arduino-1.8.4\hardware\teensy\avr\libraries\Wire\utility;e:\Arduino\arduino-1.8.4\libraries;e:\Arduino\arduino-1.8.4\hardware\teensy\avr\libraries;$(ProjectDir)..\..\..\..\..\Documents\Arduino\libraries;e:\Arduino\arduino-1.8.4\hardware\teensy\avr\cores\teensy;e:\Arduino\arduino-1.8.4\hardware\teensy\avr\cores\teensy\utils;e:\Arduino\arduino-1.8.4\hardware\teensy\avr\cores\teensy\avr;$(ProjectDir)..\code;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <ForcedIncludeFiles>$(ProjectDir)__vm\.code.vsarduino.h;%(ForcedIncludeFiles)</ForcedIncludeFiles>
       <IgnoreStandardIncludePath>false</IgnoreStandardIncludePath>
       <PreprocessorDefinitions>__HARDWARE_ATmega32u4__;__HARDWARE_ATmega32U4__;TEENSYDUINO=140;ARDUINO_ARCH_AVR;ARDUINO=10804;F_CPU=16000000L;USB_MIDI;LAYOUT_FRENCH;__cplusplus=201103L;_VMICRO_INTELLISENSE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
@@ -80,6 +80,7 @@
     </None>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="__vm\.code.vsarduino.h" />
     <ClInclude Include="__vm\.Harpe_Laser.vsarduino.h" />
   </ItemGroup>
   <PropertyGroup>
