@@ -1,5 +1,4 @@
-#include <Adafruit_MCP4725.h>
-#include <Wire.h>
+#include <SPI.h>
 #include <MIDI.h>
 //when DEBUG is defined the harp sends debug messages instead of midi messages
 //NOTE: the Teensy device type must be set accordingly in the project settings
@@ -11,17 +10,23 @@
 #define PIN_LASER_GREEN 10
 #define PIN_LASER_RED 9
 #define PIN_SENSOR 7 //A7
+#define PIN_DAC_LATCH 4
+#define PIN_DAC_CS 5
 
-//DAC i2c address
-#define DAC_ADDR 0x64
 
 //midi settings
 #define MIDI_CHANNEL 1
 #define MIDI_VELOCITY 127
 
-//number of strings of the harp and string to note mappings
-#define NUM_STRINGS 9
-uint8_t stringToNoteArray[] = { 60, 62, 64, 65, 67, 69, 71, 72, 74 };
+//define this if you want red strings between green ones
+//comment-out to have only green strings
+#define ENABLE_RED_STRINGS
+
+//number of strings of the harp and string to MIDI note mappings
+#define NUM_STRINGS 10
+uint8_t stringToNoteArray[] = { 60, 62, 64, 65, 67, 69, 71, 72, 74, 76 };
+//transposition offset in semitones from the notes defines in stringToNoteArray
+int8_t transposeOffset = 0;
 
 //times in micro-seconds
 #define LASER_ON_TIME 1500
@@ -57,7 +62,7 @@ uint16_t loopCounter = 0;
 int8_t stringIndex = 0;
 int8_t stringInc = 1; 
 
-Adafruit_MCP4725 dac;
+
 
 void initStringVibes() {
 	for (uint8_t i = 0; i < NUM_STRINGS; i++) {
@@ -91,6 +96,18 @@ void myNoteOn(byte channel, byte note, byte velocity) {
 				harpStatus = CLOSING;
 			}
 			break;
+		case 49: //second footswitch transposes down one octave
+			transposeOffset -= 12;
+			break;
+		case 50: //third footswitch transposes up one octave
+			transposeOffset += 12;
+			break;
+		case 51: //4th footswitch transposes down one semitone
+			transposeOffset -= 1;
+			break;
+		case 52: //third footswitch transposes up one semitone
+			transposeOffset += 1;
+			break;
 	}
 }
 void setup()
@@ -106,8 +123,13 @@ void setup()
 	pinMode(PIN_LASER_GREEN, OUTPUT);
 	pinMode(PIN_LASER_RED, OUTPUT);	
 	pinMode(PIN_SENSOR, INPUT);
+	pinMode(PIN_DAC_LATCH, OUTPUT);
+	pinMode(PIN_DAC_CS, OUTPUT);
 	
-	dac.begin(DAC_ADDR);
+	digitalWrite(PIN_DAC_CS, HIGH);
+	
+	//Init SPI DAC
+	SPI.begin();
 
 	//for now the harp starts in the opening state
 	delay(2000);
@@ -212,10 +234,15 @@ void manageSensor(uint8_t string) {
 	}
 }
 
+/*
+* Return the MIDI note corresponding to the specified String, taking into account the current transposition level 
+*/
 uint8_t stringToNote(uint8_t string) {
 	uint8_t note = 0;
 	if (string < NUM_STRINGS) {
 		note = stringToNoteArray[string];
+		//apply current transposition value
+		note += transposeOffset;
 	}
 	return note;
 }
@@ -241,12 +268,27 @@ void noteOff(uint8_t string) {
 #endif
 }
 
+void setDacVoltage(uint8_t dacId, uint16_t value) {
+	byte low = value & 0xff;
+	byte high = (value >> 8) & 0x0f;
+	dacId = (dacId & 1) << 7;	
+	digitalWrite(PIN_DAC_LATCH, HIGH);
+	digitalWrite(PIN_DAC_CS, LOW);
+	SPI.beginTransaction(SPISettings(4000000, MSBFIRST, SPI_MODE0));
+	SPI.transfer(dacId | 0x30 | high);
+	SPI.transfer(low);
+	SPI.endTransaction();
+	digitalWrite(PIN_DAC_CS, HIGH);
+	//immediately latch dac value
+	digitalWrite(PIN_DAC_LATCH, LOW);
+}
+
 /*
 * Move laser beam to calculated string position
 */
 void moveLaser(uint16_t position) {
 	//actual move
-	dac.setVoltage(position, false);
+	setDacVoltage(0, position);
 #ifdef DEBUG
 	Serial.print("MoveLaser(");
 	Serial.print(position);
@@ -278,12 +320,25 @@ void loop()
 #endif
 	uint16_t position = strings[stringIndex];
 	laserBeam(PIN_LASER_GREEN, LOW);
+#ifdef ENABLE_RED_STRINGS
+	laserBeam(PIN_LASER_RED, LOW);
+#endif
 	if (harpStatus != CLOSED) {
 		manageStringVibes();
 		uint16_t vibeOffset = getStringVibeOffset(stringIndex);
 		moveLaser(position + harp1stStringOffset + vibeOffset);
 
+#ifdef ENABLE_RED_STRINGS
+		//each third string is red, others are green
+		if (stringIndex % 3 == 0) {
+			laserBeam(PIN_LASER_RED, HIGH);
+		}
+		else {
+			laserBeam(PIN_LASER_GREEN, HIGH);
+		}
+#else
 		laserBeam(PIN_LASER_GREEN, HIGH);
+#endif
 		delayMicroseconds(LASER_ON_TIME);
 		manageSensor(stringIndex);
 
